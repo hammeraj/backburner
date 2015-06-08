@@ -138,6 +138,7 @@ module Backburner
       self.log_error self.exception_message(e)
       num_retries = job.stats.releases
       retry_status = "failed: attempt #{num_retries+1} of #{queue_config.max_job_retries+1}"
+      handle_error(e, job.name, job.args, job)
       if num_retries < queue_config.max_job_retries # retry again
         delay = queue_config.retry_delay + num_retries ** 3
         job.release(:delay => delay)
@@ -146,7 +147,6 @@ module Backburner
         job.bury
         self.log_job_end(job.name, "#{retry_status}, burying") if job_started_at
       end
-      handle_error(e, job.name, job.args, job)
     end
 
     # Retries the given command specified in the block several times if there is a connection error
